@@ -16,6 +16,7 @@
     "productName": "Lodge Terminal",
     "win": {
       "target": "nsis",
+      "icon": "logo/mwakwanda-logo.ico",
       "signAndEditExecutable": false
     },
     "files": [

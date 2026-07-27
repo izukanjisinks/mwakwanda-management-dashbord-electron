@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('node:path')
 const net = require('node:net')
 const fs = require('node:fs')
@@ -11,7 +11,8 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
-    title: 'Mwakwanda Backoffice',
+    title: 'Mwakwanda Management Dashboard',
+    icon: path.join(__dirname, 'logo', 'mwakwanda-logo.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true, // page and Node world stay separate; only the
@@ -26,6 +27,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null)
   createWindow()
 
   app.on('activate', () => {
