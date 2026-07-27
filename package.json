@@ -1,0 +1,26 @@
+{
+  "name": "lodge-terminal",
+  "version": "0.1.0",
+  "description": "Reception terminal shell for the Lodge Management System backoffice. Loads the live backoffice web app and bridges raw TCP printing to the branch's local receipt printer, which browsers cannot do directly.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.mwakwanda.lodge-terminal",
+    "productName": "Lodge Terminal",
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "config.json"
+    ]
+  }
+}
