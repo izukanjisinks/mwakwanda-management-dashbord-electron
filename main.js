@@ -56,6 +56,7 @@ ipcMain.handle('printer:print', async (_event, { ip, port, dataBase64 }) => {
       if (settled) return
       settled = true
       socket.destroy()
+      console.log(`Print failed for ${ip}:${targetPort}: ${err.message}`)
       reject(new Error(`Could not reach printer at ${ip}:${targetPort}: ${err.message}`))
     }
 
@@ -69,6 +70,7 @@ ipcMain.handle('printer:print', async (_event, { ip, port, dataBase64 }) => {
         socket.end()
         if (!settled) {
           settled = true
+          console.log(`Print succeeded for ${ip}:${targetPort}`)
           resolve({ success: true })
         }
       })
