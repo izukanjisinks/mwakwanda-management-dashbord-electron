@@ -11,12 +11,16 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    title: 'Mwakwanda Backoffice',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true, // page and Node world stay separate; only the
       nodeIntegration: false, // bridge in preload.js is exposed to the page
     },
   })
+
+  // The loaded page is remote and may set its own <title>; keep ours instead.
+  win.on('page-title-updated', (event) => event.preventDefault())
 
   win.loadURL(config.backofficeUrl)
 }
