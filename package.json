@@ -15,7 +15,8 @@
     "appId": "com.mwakwanda.lodge-terminal",
     "productName": "Lodge Terminal",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "signAndEditExecutable": false
     },
     "files": [
       "main.js",
