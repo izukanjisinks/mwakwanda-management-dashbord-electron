@@ -13,4 +13,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ESC/POS payload (rendered server-side), base64-encoded for safe IPC transit.
   // Resolves on success, rejects with a descriptive error otherwise.
   print: (ip, port, dataBase64) => ipcRenderer.invoke('printer:print', { ip, port, dataBase64 }),
+
+  // Prints a receipt built with node-thermal-printer's command builder. The
+  // page supplies the printer's ip:port (fetched from the backoffice server);
+  // main.js constructs the ThermalPrinter instance and renders the ESC/POS
+  // commands itself instead of receiving pre-rendered bytes.
+  printReceipt: (ip, port) => ipcRenderer.invoke('printer:printReceipt', { ip, port }),
 })

@@ -26,5 +26,8 @@
       "preload.js",
       "config.json"
     ]
+  },
+  "dependencies": {
+    "node-thermal-printer": "^4.6.0"
   }
 }

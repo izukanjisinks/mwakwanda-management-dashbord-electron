@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('node:path')
 const net = require('node:net')
 const fs = require('node:fs')
+const ThermalPrinter = require('node-thermal-printer').printer
+const PrinterTypes = require('node-thermal-printer').types
 
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8'))
 
@@ -76,4 +78,80 @@ ipcMain.handle('printer:print', async (_event, { ip, port, dataBase64 }) => {
       })
     })
   })
+})
+
+// node-thermal-printer's built-in network interface calls socket.destroy()
+// right after write()'s callback fires, which only means the bytes were
+// handed to the OS — not that the printer received them. On a real network
+// link that abrupt reset can truncate the job before it fully arrives, so
+// execute() resolves "successfully" with nothing printed. This interface
+// mirrors the raw-socket handler above instead: write, then end() gracefully
+// and wait for the socket to actually close before resolving.
+function createNetworkInterface(host, port, timeoutMs) {
+  return {
+    async isPrinterConnected() {
+      return true
+    },
+    async execute(buffer) {
+      return new Promise((resolve, reject) => {
+        const socket = new net.Socket()
+        let settled = false
+
+        const fail = (err) => {
+          if (settled) return
+          settled = true
+          socket.destroy()
+          reject(err)
+        }
+
+        socket.setTimeout(timeoutMs)
+        socket.once('timeout', () => fail(new Error('connection timed out')))
+        socket.once('error', fail)
+        socket.once('close', () => {
+          if (!settled) {
+            settled = true
+            resolve()
+          }
+        })
+
+        socket.connect(port, host, () => {
+          socket.write(buffer, (err) => {
+            if (err) return fail(err)
+            socket.end()
+          })
+        })
+      })
+    },
+  }
+}
+
+// Builds and prints a receipt via node-thermal-printer's ESC/POS command
+// builder instead of raw pre-rendered bytes. The printer's IP is supplied
+// per-call (the renderer fetches it from the backoffice server per branch)
+// rather than hardcoded, since every branch has a different printer.
+ipcMain.handle('printer:printReceipt', async (_event, { ip, port }) => {
+  if (!ip) throw new Error('No printer IP provided')
+  const targetPort = port || 9100
+
+  const printer = new ThermalPrinter({
+    type: PrinterTypes.EPSON,
+    interface: createNetworkInterface(ip, targetPort, DIAL_TIMEOUT_MS),
+  })
+
+  printer.alignCenter()
+  printer.bold(true)
+  printer.println('STORE NAME')
+  printer.bold(false)
+  printer.println('Network Print Successful')
+  printer.cut()
+
+  try {
+    await printer.execute()
+    console.log(`Print succeeded for ${ip}:${targetPort}`)
+    printer.clear()
+    return { success: true }
+  } catch (err) {
+    console.log(`Print failed for ${ip}:${targetPort}: ${err.message}`)
+    throw new Error(`Could not reach printer at ${ip}:${targetPort}: ${err.message}`)
+  }
 })
